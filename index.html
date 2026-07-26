@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SK하이닉스 Bull vs Bear 분석 | 2026.07</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bull: #00e676;
+            --bull-bg: rgba(0, 230, 118, 0.12);
+            --bear: #ff4d6a;
+            --bear-bg: rgba(255, 77, 106, 0.12);
+            --gold: #ffab40;
+            --blue: #00d4ff;
+            --purple: #7b61ff;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #080818;
+            color: #e0e0ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated mesh gradient background */
+        .bg-mesh {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 15% 20%, rgba(123, 97, 255, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 85% 80%, rgba(255, 77, 106, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 50% 50%, rgba(0, 230, 118, 0.04) 0%, transparent 70%);
+            animation: meshMove 20s ease-in-out infinite alternate;
+        }
+        @keyframes meshMove {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(30deg); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: orbFloat 15s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 300px; height: 300px; background: var(--bull); top: 10%; left: -5%; animation-delay: 0s; }
+        .orb-2 { width: 400px; height: 400px; background: var(--bear); bottom: 5%; right: -10%; animation-delay: -5s; }
+        .orb-3 { width: 250px; height: 250px; background: var(--purple); top: 50%; left: 50%; animation-delay: -10s; }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.1); }
+            66% { transform: translate(-20px, 30px) scale(0.9); }
+            100% { transform: translate(10px, 10px) scale(1.05); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 45px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header .logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+        .header h1 .bull-text {
+            color: var(--bull);
+            text-shadow: 0 0 30px rgba(0, 230, 118, 0.3);
+        }
+        .header h1 .vs-text {
+            color: #555;
+            font-size: 2rem;
+            margin: 0 5px;
+        }
+        .header h1 .bear-text {
+            color: var(--bear);
+            text-shadow: 0 0 30px rgba(255, 77, 106, 0.3);
+        }
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #8888bb;
+            font-weight: 300;
+            margin-top: 8px;
+        }
+        .header .price-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+        }
+        .price-badge .current {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+        .price-badge .change {
+            color: var(--bear);
+            font-size: 0.9rem;
+        }
+        .price-badge .divider {
+            width: 1px;
+            height: 25px;
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Tug of War Visual */
+        .tug-section {
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out both;
+            animation-delay: 0.2s;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tug-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 35px;
+            backdrop-filter: blur(20px);
+        }
+        .tug-card h2 {
+            text-align: center;
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .tug-bar-container {
+            position: relative;
+            margin: 30px 0 20px;
+        }
+        .tug-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .tug-labels span {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .tug-labels .bull-label { color: var(--bull); }
+        .tug-labels .bear-label { color: var(--bear); }
+        .tug-bar {
+            height: 40px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+        .tug-bar .bull-side {
+            width: 62%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0, 230, 118, 0.6), rgba(0, 230, 118, 0.25));
+            border-radius: 20px 0 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: width 2s ease;
+        }
+        .tug-bar .bear-side {
+            width: 38%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 77, 106, 0.25), rgba(255, 77, 106, 0.6));
+            border-radius: 0 20px 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: width 2s ease;
+        }
+        .tug-bar .center-line {
+            position: absolute;
+            left: 50%;
+            top: -5px;
+            bottom: -5px;
+            width: 2px;
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-50%);
+        }
+        .tug-verdict {
+            text-align: center;
+            margin-top: 18px;
+            padding: 15px;
+            background: rgba(0, 230, 118, 0.06);
+            border: 1px solid rgba(0, 230, 118, 0.15);
+            border-radius: 14px;
+        }
+        .tug-verdict .verdict-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--bull);
+        }
+        .tug-verdict .verdict-sub {
+            font-size: 0.85rem;
+            color: #9999cc;
+            margin-top: 5px;
+        }
+
+        /* Dual Column Layout */
+        .dual-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        @media (max-width: 900px) {
+            .dual-columns { grid-template-columns: 1fr; }
+        }
+
+        /* Argument Cards */
+        .arg-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            animation: fadeInUp 0.8s ease-out both;
+            position: relative;
+            overflow: hidden;
+        }
+        .arg-card.bull {
+            border-top: 3px solid var(--bull);
+            animation-delay: 0.3s;
+        }
+        .arg-card.bear {
+            border-top: 3px solid var(--bear);
+            animation-delay: 0.4s;
+        }
+        .arg-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 120px;
+            pointer-events: none;
+        }
+        .arg-card.bull::before {
+            background: linear-gradient(180deg, rgba(0,230,118,0.04) 0%, transparent 100%);
+        }
+        .arg-card.bear::before {
+            background: linear-gradient(180deg, rgba(255,77,106,0.04) 0%, transparent 100%);
+        }
+        .arg-card h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .arg-card.bull h2 { color: var(--bull); }
+        .arg-card.bear h2 { color: var(--bear); }
+
+        .argument {
+            margin-bottom: 22px;
+            padding: 18px;
+            border-radius: 14px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .arg-card.bull .argument {
+            background: rgba(0, 230, 118, 0.03);
+            border: 1px solid rgba(0, 230, 118, 0.08);
+        }
+        .arg-card.bull .argument:hover {
+            background: rgba(0, 230, 118, 0.06);
+            border-color: rgba(0, 230, 118, 0.2);
+            transform: translateX(5px);
+        }
+        .arg-card.bear .argument {
+            background: rgba(255, 77, 106, 0.03);
+            border: 1px solid rgba(255, 77, 106, 0.08);
+        }
+        .arg-card.bear .argument:hover {
+            background: rgba(255, 77, 106, 0.06);
+            border-color: rgba(255, 77, 106, 0.2);
+            transform: translateX(-5px);
+        }
+        .argument .arg-num {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            font-size: 2rem;
+            font-weight: 900;
+            opacity: 0.08;
+        }
+        .argument .arg-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .argument .arg-title .strength {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .argument .arg-title .strength .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+        .arg-card.bull .argument .arg-title .strength .dot { background: var(--bull); }
+        .arg-card.bear .argument .arg-title .strength .dot { background: var(--bear); }
+        .argument .arg-title .strength .dot.empty { opacity: 0.2; }
+        .argument .arg-body {
+            font-size: 0.88rem;
+            color: #aaaacc;
+            line-height: 1.7;
+        }
+        .argument .arg-body strong {
+            color: #e0e0ff;
+        }
+        .argument .arg-data {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .arg-card.bull .argument .arg-data {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--bull);
+        }
+        .arg-card.bear .argument .arg-data {
+            background: rgba(255, 77, 106, 0.1);
+            color: var(--bear);
+        }
+
+        /* Charts Row */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        @media (max-width: 900px) {
+            .chart-row { grid-template-columns: 1fr; }
+        }
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            animation: fadeInUp 0.8s ease-out both;
+            animation-delay: 0.5s;
+        }
+        .chart-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        .chart-container.tall { height: 380px; }
+
+        /* Full width chart */
+        .full-chart {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            margin-bottom: 35px;
+            animation: fadeInUp 0.8s ease-out both;
+            animation-delay: 0.6s;
+        }
+        .full-chart h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Score Table */
+        .score-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 35px;
+            backdrop-filter: blur(20px);
+            margin-bottom: 35px;
+            animation: fadeInUp 0.8s ease-out both;
+            animation-delay: 0.7s;
+        }
+        .score-section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .score-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+        .score-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.8rem;
+            color: #8888bb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        .score-table th:nth-child(2),
+        .score-table th:nth-child(3),
+        .score-table th:nth-child(4) {
+            text-align: center;
+        }
+        .score-table td {
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.02);
+            font-size: 0.92rem;
+        }
+        .score-table tr td:first-child {
+            border-radius: 10px 0 0 10px;
+            font-weight: 600;
+        }
+        .score-table tr td:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+        .score-table td:nth-child(2),
+        .score-table td:nth-child(3) {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .score-table td:nth-child(4) {
+            text-align: center;
+        }
+        .score-bull { color: var(--bull); }
+        .score-bear { color: var(--bear); }
+        .winner-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .winner-badge.bull-win { background: var(--bull-bg); color: var(--bull); }
+        .winner-badge.bear-win { background: var(--bear-bg); color: var(--bear); }
+        .winner-badge.draw { background: rgba(255,171,64,0.12); color: var(--gold); }
+
+        /* Conclusion */
+        .conclusion {
+            background: linear-gradient(135deg, rgba(0, 230, 118, 0.06), rgba(123, 97, 255, 0.06));
+            border: 1px solid rgba(0, 230, 118, 0.15);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            animation: fadeInUp 1s ease-out both;
+            animation-delay: 0.9s;
+            margin-bottom: 35px;
+        }
+        .conclusion h2 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--bull), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .conclusion .verdict-main {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e0e0ff;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        .conclusion .verdict-main .highlight {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--bull);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .conclusion .strategy-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+        @media (max-width: 700px) {
+            .conclusion .strategy-box { grid-template-columns: 1fr; }
+        }
+        .strategy-item {
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .strategy-item .strat-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .strategy-item .strat-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+        .strategy-item .strat-desc {
+            font-size: 0.82rem;
+            color: #9999cc;
+            line-height: 1.6;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            text-align: center;
+            padding: 20px;
+            color: #444466;
+            font-size: 0.78rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-row">
+                <h1>
+                    <span class="bull-text">BULL</span>
+                    <span class="vs-text">vs</span>
+                    <span class="bear-text">BEAR</span>
+                </h1>
+            </div>
+            <div class="subtitle">SK하이닉스 (000660) — 사는 쪽 vs 파는 쪽 심층 분석</div>
+            <div class="price-badge">
+                <span class="current">₩1,854,000</span>
+                <span class="divider"></span>
+                <span class="change">고점 대비 -37.9%</span>
+                <span class="divider"></span>
+                <span style="color: var(--gold); font-size: 0.9rem;">2026.07.26 기준</span>
+            </div>
+        </div>
+
+        <!-- Tug of War -->
+        <div class="tug-section">
+            <div class="tug-card">
+                <h2>종합 힘겨루기 — 매수 vs 매도 논거 강도</h2>
+                <div class="tug-bar-container">
+                    <div class="tug-labels">
+                        <span class="bull-label">BULL (매수)</span>
+                        <span class="bear-label">BEAR (매도)</span>
+                    </div>
+                    <div class="tug-bar">
+                        <div class="bull-side" id="bullBar">62%</div>
+                        <div class="bear-side" id="bearBar">38%</div>
+                        <div class="center-line"></div>
+                    </div>
+                </div>
+                <div class="tug-verdict">
+                    <div class="verdict-text">매수 우위 — 단, 분할매수 전략 필수</div>
+                    <div class="verdict-sub">펀더멘털과 밸류에이션은 Bull 압도 | 단기 수급·센티먼트는 Bear 우세</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bull vs Bear Arguments -->
+        <div class="dual-columns">
+            <!-- BULL -->
+            <div class="arg-card bull">
+                <h2>🟢 사는 쪽 (Bull Case)</h2>
+
+                <div class="argument">
+                    <div class="arg-num">01</div>
+                    <div class="arg-title">
+                        압도적 실적 — 영업이익률 72%
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        1Q26 매출 <strong>52.6조원</strong> (YoY +198%), 영업이익 <strong>37.6조원</strong>. TSMC·마이크론을 모두 압도하는 수익성. 이건 테마가 아니라 <strong>실적으로 증명</strong>된 것.
+                    </div>
+                    <div class="arg-data">영업이익률 72% — 반도체 역대 최고 수준</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">02</div>
+                    <div class="arg-title">
+                        HBM 독점적 지위 — 점유율 56.4%
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        글로벌 HBM 시장 1위. 매출 31%이지만 <strong>영업이익의 50% 이상</strong> 기여. 향후 3년간 고객 수요 > 생산능력. CXMT는 HBM 기술력 없음.
+                    </div>
+                    <div class="arg-data">고객 수요가 3년간 생산능력 초과</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">03</div>
+                    <div class="arg-title">
+                        Forward P/E 8.4x — 역사적 저점
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        적정가 추정 <strong>₩2,700,000</strong>. 37개 증권사 중 35개가 매수, 평균 목표가 ₩3,170,000. 현재가 대비 <strong>+71% 상승여력</strong>.
+                    </div>
+                    <div class="arg-data">증권사 35/37 "Strong Buy"</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">04</div>
+                    <div class="arg-title">
+                        HBM4/HBM4E 신제품 사이클
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        하반기 HBM4 양산 본격화, HBM4E 샘플링 시작. <strong>ASP 상승</strong>으로 수익성 추가 개선. NVIDIA 차세대 GPU 탑재 확정.
+                    </div>
+                    <div class="arg-data">ASP 상승 + 물량 증가 = 더블 성장</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">05</div>
+                    <div class="arg-title">
+                        나스닥 ADR — 글로벌 재평가
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        첫날 +13% 급등. 글로벌 자금 접근성 확대 → 장기적 <strong>밸류에이션 리레이팅</strong> 가능성. 글로벌 패시브 펀드 편입 기대.
+                    </div>
+                    <div class="arg-data">공모가 $149 → 첫날 종가 $168</div>
+                </div>
+            </div>
+
+            <!-- BEAR -->
+            <div class="arg-card bear">
+                <h2>🔴 파는 쪽 (Bear Case)</h2>
+
+                <div class="argument">
+                    <div class="arg-num">01</div>
+                    <div class="arg-title">
+                        고점 -37% 폭락 — 베어마켓 진입
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        ₩2,987K → ₩1,854K. 삼성·마이크론·하이닉스 <strong>모두 -20% 이상 하락</strong>. 메모리 ETF 베어마켓 진입. "AI 버블 붕괴 시작" 시각 존재.
+                    </div>
+                    <div class="arg-data">메모리 섹터 전체가 베어마켓</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">02</div>
+                    <div class="arg-title">
+                        CXMT 상장 (7/27) — 가격 파괴
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        중국 최대 D램 업체가 <strong>12.7조원 규모 IPO</strong>. 30% 저가 D램 전략으로 물량 잠식. 범용 DRAM 가격 하방 압력 가중.
+                    </div>
+                    <div class="arg-data">내일(7/27) 상하이 커촹반 상장</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">03</div>
+                    <div class="arg-title">
+                        AI 설비투자 둔화 시그널
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        메타 잉여 컴퓨팅 활용 보도, CoreWeave 메모리 가격 헤지 검토, 뉴욕 데이터센터 건설 <strong>모라토리엄 제안</strong>. 수요 피크아웃 우려.
+                    </div>
+                    <div class="arg-data">빅테크 CAPEX 브레이크 가능성</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">04</div>
+                    <div class="arg-title">
+                        피크 실적 = 피크 주가 함정
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        메모리 산업은 역사적으로 <strong>PER이 낮을 때가 고점</strong>. 영업이익률 72%는 지속 불가능한 수준. 정상화 P/E 30~40x vs 현재 8.4x → "싸 보이지만 함정"
+                    </div>
+                    <div class="arg-data">역발상 밸류에이션 — 사이클 고점 경고</div>
+                </div>
+
+                <div class="argument">
+                    <div class="arg-num">05</div>
+                    <div class="arg-title">
+                        ADR 상장 후 수급 왜곡
+                        <span class="strength">
+                            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span><span class="dot empty"></span>
+                        </span>
+                    </div>
+                    <div class="arg-body">
+                        역대 최대 규모 외국기업 미국 주식 매각 (블룸버그). 국내 기관은 <strong>비중 한도 초과 시 의무 매도</strong> → 구조적 매도 압력 상존.
+                    </div>
+                    <div class="arg-data">기관 투자 비중 상한 리밸런싱 매도</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <h3>📊 항목별 Bull vs Bear 점수</h3>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>💰 밸류에이션 시나리오 비교</h3>
+                <div class="chart-container">
+                    <canvas id="scenarioChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valuation Waterfall -->
+        <div class="full-chart">
+            <h3>📈 메모리 사이클과 밸류에이션 — 과거 vs 현재</h3>
+            <div class="chart-container tall">
+                <canvas id="cycleChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Score Table -->
+        <div class="score-section">
+            <h2>항목별 스코어카드</h2>
+            <table class="score-table">
+                <thead>
+                    <tr>
+                        <th>평가 항목</th>
+                        <th style="color: var(--bull);">Bull</th>
+                        <th style="color: var(--bear);">Bear</th>
+                        <th>승자</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>펀더멘털 (실적·수익성)</td>
+                        <td class="score-bull">9.5</td>
+                        <td class="score-bear">3.0</td>
+                        <td><span class="winner-badge bull-win">Bull 압승</span></td>
+                    </tr>
+                    <tr>
+                        <td>기술 경쟁력 (HBM 독점)</td>
+                        <td class="score-bull">9.0</td>
+                        <td class="score-bear">2.5</td>
+                        <td><span class="winner-badge bull-win">Bull 압승</span></td>
+                    </tr>
+                    <tr>
+                        <td>밸류에이션 (PER/적정가)</td>
+                        <td class="score-bull">7.5</td>
+                        <td class="score-bear">6.5</td>
+                        <td><span class="winner-badge bull-win">Bull 우세</span></td>
+                    </tr>
+                    <tr>
+                        <td>신제품 모멘텀 (HBM4)</td>
+                        <td class="score-bull">8.5</td>
+                        <td class="score-bear">3.0</td>
+                        <td><span class="winner-badge bull-win">Bull 압승</span></td>
+                    </tr>
+                    <tr>
+                        <td>단기 수급·센티먼트</td>
+                        <td class="score-bull">3.5</td>
+                        <td class="score-bear">8.0</td>
+                        <td><span class="winner-badge bear-win">Bear 우세</span></td>
+                    </tr>
+                    <tr>
+                        <td>경쟁 위협 (CXMT 등)</td>
+                        <td class="score-bull">5.5</td>
+                        <td class="score-bear">6.5</td>
+                        <td><span class="winner-badge bear-win">Bear 소폭</span></td>
+                    </tr>
+                    <tr>
+                        <td>매크로·지정학 리스크</td>
+                        <td class="score-bull">4.0</td>
+                        <td class="score-bear">7.0</td>
+                        <td><span class="winner-badge bear-win">Bear 우세</span></td>
+                    </tr>
+                    <tr>
+                        <td>사이클 포지션 (피크 논쟁)</td>
+                        <td class="score-bull">5.0</td>
+                        <td class="score-bear">7.5</td>
+                        <td><span class="winner-badge bear-win">Bear 우세</span></td>
+                    </tr>
+                    <tr style="border-top: 2px solid rgba(255,255,255,0.1);">
+                        <td style="font-size: 1.05rem; font-weight: 800;">종합 점수 (가중평균)</td>
+                        <td class="score-bull" style="font-size: 1.3rem;">6.8</td>
+                        <td class="score-bear" style="font-size: 1.3rem;">5.5</td>
+                        <td><span class="winner-badge bull-win" style="font-size: 0.85rem;">Bull 우위</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="conclusion">
+            <h2>최종 판단 (Verdict)</h2>
+            <div class="verdict-main">
+                중장기적으로 <span class="highlight">매수 우위</span><br>
+                현재 ₩1,854,000은 "좋은 회사를 합리적 가격에" 구간<br>
+                <span style="font-size: 0.95rem; color: #ff9999;">단, 내일 CXMT 상장 + 반도체 베어마켓 → 단기 변동성 주의</span>
+            </div>
+            <div class="strategy-box">
+                <div class="strategy-item">
+                    <div class="strat-icon">🎯</div>
+                    <div class="strat-title" style="color: var(--bull);">분할매수 전략</div>
+                    <div class="strat-desc">
+                        ₩1,700,000~1,900,000 구간에서<br>
+                        <strong style="color: #e0e0ff;">3~4회 나눠서 진입</strong><br>
+                        한 번에 몰빵은 리스크 과다
+                    </div>
+                </div>
+                <div class="strategy-item">
+                    <div class="strat-icon">⏰</div>
+                    <div class="strat-title" style="color: var(--gold);">핵심 체크포인트</div>
+                    <div class="strat-desc">
+                        <strong style="color: #e0e0ff;">8월 빅테크 실적</strong>과<br>
+                        <strong style="color: #e0e0ff;">NVIDIA 가이던스</strong> 확인 후<br>
+                        추가 비중 확대 여부 결정
+                    </div>
+                </div>
+                <div class="strategy-item">
+                    <div class="strat-icon">🛡️</div>
+                    <div class="strat-title" style="color: var(--bear);">손절 기준</div>
+                    <div class="strat-desc">
+                        빅테크 AI CAPEX 축소 <strong style="color: #e0e0ff;">공식 발표</strong> 시<br>
+                        또는 ₩1,500,000 하회 시<br>
+                        전략 재검토 필요
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            ⚠️ 본 자료는 투자 권유가 아닌 공개 데이터 기반 분석 자료입니다. 투자 판단은 본인 책임 하에 이루어져야 합니다.<br>
+            데이터 출처: TrendForce, CNBC, Yahoo Finance, 국내 증권사 리포트, Investing.com
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#8888bb';
+        Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+
+        // =====================
+        // RADAR CHART — Bull vs Bear Scores
+        // =====================
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['펀더멘털', '기술경쟁력', '밸류에이션', '신제품', '수급', '경쟁위협\n방어력', '매크로', '사이클\n포지션'],
+                datasets: [
+                    {
+                        label: 'Bull (매수)',
+                        data: [9.5, 9.0, 7.5, 8.5, 3.5, 5.5, 4.0, 5.0],
+                        borderColor: 'rgba(0, 230, 118, 0.8)',
+                        backgroundColor: 'rgba(0, 230, 118, 0.12)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#00e676',
+                        pointRadius: 4,
+                    },
+                    {
+                        label: 'Bear (매도)',
+                        data: [3.0, 2.5, 6.5, 3.0, 8.0, 6.5, 7.0, 7.5],
+                        borderColor: 'rgba(255, 77, 106, 0.8)',
+                        backgroundColor: 'rgba(255, 77, 106, 0.12)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#ff4d6a',
+                        pointRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            stepSize: 2,
+                            font: { size: 9 },
+                            backdropColor: 'transparent',
+                        },
+                        grid: { color: 'rgba(255,255,255,0.06)' },
+                        angleLines: { color: 'rgba(255,255,255,0.06)' },
+                        pointLabels: { font: { size: 11, weight: '500' }, color: '#aaaacc' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { size: 12 }, usePointStyle: true }
+                    }
+                }
+            }
+        });
+
+        // =====================
+        // SCENARIO BAR CHART
+        // =====================
+        const scenarioCtx = document.getElementById('scenarioChart').getContext('2d');
+        new Chart(scenarioCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Bear\n(하방)', 'Base\n(기본)', 'Bull\n(상방)', '증권사\n평균목표', '증권사\n최고목표'],
+                datasets: [{
+                    label: '주가 (만원)',
+                    data: [160, 205, 270, 317, 380],
+                    backgroundColor: [
+                        'rgba(255, 77, 106, 0.7)',
+                        'rgba(255, 171, 64, 0.7)',
+                        'rgba(0, 230, 118, 0.7)',
+                        'rgba(0, 212, 255, 0.7)',
+                        'rgba(123, 97, 255, 0.7)',
+                    ],
+                    borderColor: [
+                        '#ff4d6a', '#ffab40', '#00e676', '#00d4ff', '#7b61ff'
+                    ],
+                    borderWidth: 1.5,
+                    borderRadius: 10,
+                    barPercentage: 0.65,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => '₩' + (ctx.raw * 10000).toLocaleString()
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            currentLine: {
+                                type: 'line',
+                                yMin: 185.4,
+                                yMax: 185.4,
+                                borderColor: 'rgba(255, 255, 255, 0.6)',
+                                borderWidth: 2,
+                                borderDash: [6, 4],
+                                label: {
+                                    display: true,
+                                    content: '현재가 ₩1,854,000',
+                                    position: 'start',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                                    color: '#fff',
+                                    font: { size: 10 },
+                                    padding: 4,
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: {
+                            callback: v => v + '만',
+                            font: { size: 10 }
+                        },
+                        min: 100,
+                        max: 420,
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+
+        // =====================
+        // CYCLE CHART — Historical Pattern
+        // =====================
+        const cycleCtx = document.getElementById('cycleChart').getContext('2d');
+
+        const cycleBullGrad = cycleCtx.createLinearGradient(0, 0, 0, 380);
+        cycleBullGrad.addColorStop(0, 'rgba(0, 230, 118, 0.2)');
+        cycleBullGrad.addColorStop(1, 'rgba(0, 230, 118, 0.0)');
+
+        const cycleBearGrad = cycleCtx.createLinearGradient(0, 0, 0, 380);
+        cycleBearGrad.addColorStop(0, 'rgba(255, 77, 106, 0.15)');
+        cycleBearGrad.addColorStop(1, 'rgba(255, 77, 106, 0.0)');
+
+        new Chart(cycleCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    '2018', '2019', '2020', '2021 H1', '2021 H2',
+                    '2022', '2023 H1', '2023 H2', '2024 H1', '2024 H2',
+                    '2025 H1', '2025 H2', '2026 H1', '2026 H2\n(예상)'
+                ],
+                datasets: [
+                    {
+                        label: 'SK하이닉스 영업이익률 (%)',
+                        data: [52, 3, 5, 30, 35, 15, -20, 2, 25, 45, 55, 65, 72, 68],
+                        borderColor: '#00d4ff',
+                        backgroundColor: cycleBullGrad,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: function(ctx) {
+                            const v = ctx.raw;
+                            if (v >= 50) return '#00e676';
+                            if (v >= 20) return '#ffab40';
+                            if (v >= 0) return '#00d4ff';
+                            return '#ff4d6a';
+                        },
+                        pointBorderColor: 'transparent',
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Forward P/E (배)',
+                        data: [5, 80, 60, 15, 12, 25, null, 150, 20, 12, 10, 9, 8.4, 9],
+                        borderColor: '#ff6b9d',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#ff6b9d',
+                        yAxisID: 'y1',
+                        spanGaps: true,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { padding: 20, font: { size: 12 }, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 10, 26, 0.9)',
+                        borderColor: 'rgba(123, 97, 255, 0.3)',
+                        borderWidth: 1,
+                    },
+                    annotation: {
+                        annotations: {
+                            peakZone: {
+                                type: 'box',
+                                xMin: '2026 H1',
+                                xMax: '2026 H2\n(예상)',
+                                backgroundColor: 'rgba(255, 171, 64, 0.05)',
+                                borderColor: 'rgba(255, 171, 64, 0.2)',
+                                borderWidth: 1,
+                                label: {
+                                    display: true,
+                                    content: '현재 구간 — 피크 논쟁 중',
+                                    position: 'start',
+                                    color: '#ffab40',
+                                    font: { size: 10 },
+                                    padding: 4,
+                                }
+                            },
+                            crashZone: {
+                                type: 'box',
+                                xMin: '2022',
+                                xMax: '2023 H1',
+                                backgroundColor: 'rgba(255, 77, 106, 0.04)',
+                                borderColor: 'rgba(255, 77, 106, 0.15)',
+                                borderWidth: 1,
+                                borderDash: [4, 4],
+                                label: {
+                                    display: true,
+                                    content: '다운사이클',
+                                    position: 'start',
+                                    color: '#ff4d6a',
+                                    font: { size: 9 },
+                                    padding: 3,
+                                }
+                            },
+                            noteLabel: {
+                                type: 'label',
+                                xValue: '2019',
+                                yValue: 70,
+                                content: ['역발상: PER 낮을 때 = 고점', 'PER 높을 때 = 저점'],
+                                color: '#ff6b9d',
+                                font: { size: 10, style: 'italic' },
+                                backgroundColor: 'rgba(255, 107, 157, 0.08)',
+                                padding: 8,
+                                borderRadius: 8,
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { font: { size: 10 }, maxRotation: 45 }
+                    },
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: {
+                            callback: v => v + '%',
+                            font: { size: 10 }
+                        },
+                        title: {
+                            display: true,
+                            text: '영업이익률 (%)',
+                            color: '#00d4ff',
+                            font: { size: 11 }
+                        },
+                        min: -30,
+                        max: 80,
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            callback: v => v + 'x',
+                            font: { size: 10 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Forward P/E (배)',
+                            color: '#ff6b9d',
+                            font: { size: 11 }
+                        },
+                        min: 0,
+                        max: 160,
+                    }
+                }
+            }
+        });
+
+        // =====================
+        // Animate tug of war bar on scroll
+        // =====================
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.getElementById('bullBar').style.width = '62%';
+                    document.getElementById('bearBar').style.width = '38%';
+                }
+            });
+        }, { threshold: 0.5 });
+        observer.observe(document.querySelector('.tug-bar'));
+    </script>
+</body>
+</html>
